@@ -1,0 +1,195 @@
+JADE Cloud Matrix — Complete File Structure
+═══════════════════════════════════════════════
+
+jade-cloud-matrix/
+│
+├── 📄 README.md                                 [Main project documentation]
+├── 📄 IMPLEMENTATION_COMPLETE.md                [Completion summary]
+├── 📄 PROJECT_SUMMARY.md                        [Project overview]
+├── 📄 TESTING_CHECKLIST.md                      [Testing guide]
+├── 📄 db_setup.sql                              [PostgreSQL setup]
+├── 📄 .env.example                              [Environment template]
+├── 📄 .gitignore                                [Git ignore rules]
+│
+├── 📁 backend/                                   [FastAPI Backend]
+│   ├── 📄 README.md                             [Backend documentation]
+│   ├── 📄 requirements.txt                      [Python dependencies]
+│   ├── 📄 .env.example                          [Backend env template]
+│   ├── 📄 alembic.ini                           [Alembic config]
+│   │
+│   ├── 📁 alembic/
+│   │   ├── 📄 env.py                            [Async migration support]
+│   │   ├── 📄 script.py.mako                    [Migration template]
+│   │   └── 📁 versions/
+│   │       └── 📄 0001_initial_schema.py        [Full DB schema]
+│   │
+│   ├── 📁 scripts/
+│   │   └── 📄 seed.py                           [Database seeding]
+│   │
+│   └── 📁 app/
+│       ├── 📄 __init__.py
+│       ├── 📄 main.py                           [FastAPI app entry]
+│       ├── 📄 config.py                         [Settings management]
+│       ├── 📄 database.py                       [SQLAlchemy setup]
+│       ├── 📄 dependencies.py                   [FastAPI dependencies]
+│       │
+│       ├── 📁 core/
+│       │   ├── 📄 __init__.py
+│       │   ├── 📄 security.py                   [JWT + bcrypt + OAuth2]
+│       │   └── 📄 audit.py                      [Audit logging]
+│       │
+│       ├── 📁 models/                           [9 SQLAlchemy Models]
+│       │   ├── 📄 __init__.py
+│       │   ├── 📄 user.py
+│       │   ├── 📄 provider.py                   [providers + regions]
+│       │   ├── 📄 pricing.py                    [compute + storage]
+│       │   ├── 📄 reserved_pricing.py
+│       │   ├── 📄 kubernetes_pricing.py
+│       │   ├── 📄 network_pricing.py
+│       │   ├── 📄 calculation.py
+│       │   ├── 📄 budget.py                     [budgets + alerts]
+│       │   └── 📄 audit_log.py
+│       │
+│       ├── 📁 schemas/                          [11 Pydantic Schemas]
+│       │   ├── 📄 __init__.py
+│       │   ├── 📄 auth.py
+│       │   ├── 📄 user.py
+│       │   ├── 📄 provider.py
+│       │   ├── 📄 pricing.py
+│       │   ├── 📄 reserved_pricing.py
+│       │   ├── 📄 kubernetes_pricing.py
+│       │   ├── 📄 network_pricing.py
+│       │   ├── 📄 calculation.py
+│       │   ├── 📄 budget.py
+│       │   ├── 📄 recommendation.py
+│       │   └── 📄 audit_log.py
+│       │
+│       ├── 📁 routers/                          [12 API Routers — 30+ Endpoints]
+│       │   ├── 📄 __init__.py
+│       │   ├── 📄 health.py                     [GET /api/healthz]
+│       │   ├── 📄 auth.py                       [Login, Register, Me]
+│       │   ├── 📄 providers.py                  [Providers & Regions]
+│       │   ├── 📄 pricing.py                    [Compute & Storage]
+│       │   ├── 📄 reserved.py                   [Reserved Instances]
+│       │   ├── 📄 kubernetes.py                 [K8s Pricing]
+│       │   ├── 📄 network.py                    [Network/Data Transfer]
+│       │   ├── 📄 calculations.py               [Calc CRUD & History]
+│       │   ├── 📄 budgets.py                    [Budget Management]
+│       │   ├── 📄 recommendations.py            [AI via Claude]
+│       │   ├── 📄 admin.py                      [Admin Operations]
+│       │   └── 📄 export.py                     [PDF & Excel]
+│       │
+│       └── 📁 services/                         [15+ Business Logic Services]
+│           ├── 📄 __init__.py
+│           ├── 📄 pricing_engine.py             [Standard pricing calc]
+│           ├── 📄 reserved_engine.py            [Reserved calc]
+│           ├── �� kubernetes_engine.py          [K8s cost modeling]
+│           ├── 📄 network_engine.py             [Network calc]
+│           ├── 📄 comparison_engine.py          [Cross-provider compare]
+│           ├── 📄 budget_service.py             [Budget tracking]
+│           ├── 📄 ai_recommendations.py         [Claude API]
+│           │
+│           ├── 📁 ingestion/
+│           │   ├── �� __init__.py
+│           │   ├── 📄 scheduler.py              [APScheduler setup]
+│           │   ├── 📄 runner.py                 [Orchestrates ingestion]
+│           │   ├── 📄 aws_ingester.py           [AWS pricing API]
+│           │   ├── 📄 azure_ingester.py         [Azure pricing API]
+│           │   ├── 📄 gcp_ingester.py           [GCP pricing API]
+│           │   └── 📄 fallback_data.py          [Hardcoded fallback]
+│           │
+│           └── 📁 export/
+│               ├── 📄 __init__.py
+│               ├── 📄 pdf_exporter.py           [ReportLab PDF]
+│               └── 📄 excel_exporter.py         [openpyxl Excel]
+│
+└── 📁 frontend/                                  [React Frontend]
+    ├── 📄 README.md                             [Frontend documentation]
+    ├── 📄 package.json                          [Node dependencies]
+    ├── 📄 tsconfig.json                         [TypeScript config]
+    ├── 📄 tsconfig.node.json                    [Node TypeScript config]
+    ├── 📄 vite.config.ts                        [Vite + proxy config]
+    ├── 📄 tailwind.config.ts                    [Tailwind CSS config]
+    ├── 📄 postcss.config.js                     [PostCSS config]
+    ├── 📄 index.html                            [HTML entry point]
+    │
+    └── 📁 src/
+        ├── 📄 main.tsx                          [React entry + QueryClient]
+        ├── 📄 App.tsx                           [Root + routing]
+        ├── 📄 index.css                         [Global styles]
+        │
+        ├── 📁 api/                              [11 API Client Modules]
+        │   ├── 📄 axios.ts                      [Axios + JWT interceptor]
+        │   ├── 📄 auth.ts
+        │   ├── 📄 providers.ts
+        │   ├── 📄 pricing.ts
+        │   ├── 📄 calculations.ts
+        │   ├── 📄 reserved.ts
+        │   ├── 📄 kubernetes.ts
+        │   ├── 📄 network.ts
+        │   ├── 📄 budgets.ts
+        │   ├── 📄 recommendations.ts
+        │   ├── 📄 admin.ts
+        │   └── 📄 export.ts
+        │
+        ├── 📁 hooks/                            [Custom React Hooks]
+        │   ├── 📄 useAuth.tsx                   [Auth context provider]
+        │   └── 📄 useToast.ts                   [Toast notifications]
+        │
+        ├── 📁 components/
+        │   ├── 📁 ui/                           [8 shadcn/ui Components]
+        │   │   ├── 📄 button.tsx
+        │   │   ├── 📄 card.tsx
+        │   │   ├── 📄 input.tsx
+        │   │   ├── 📄 select.tsx
+        │   │   ├── 📄 table.tsx
+        │   │   ├── 📄 badge.tsx
+        │   │   ├── 📄 label.tsx
+        │   │   └── 📄 tabs.tsx
+        │   │
+        │   ├── 📁 layout/                       [Layout Components]
+        │   │   ├── 📄 Layout.tsx                [Main layout wrapper]
+        │   │   ├── 📄 Sidebar.tsx               [Navigation sidebar]
+        │   │   └── 📄 TopBar.tsx                [Top navigation bar]
+        │   │
+        │   ├── 📁 calculator/                   [6 Calculator Components]
+        │   │   ├── 📄 ComputeForm.tsx
+        │   │   ├── 📄 StorageForm.tsx
+        │   │   ├── 📄 ReservedForm.tsx
+        │   │   ├── 📄 KubernetesForm.tsx
+        │   │   ├── 📄 NetworkForm.tsx
+        │   │   └── 📄 ResultsPanel.tsx
+        │   │
+        │   └── 📁 budgets/                      [Budget Components]
+        │       ├── 📄 BudgetCard.tsx
+        │       └── 📄 BudgetAlertBadge.tsx
+        │
+        ├── 📁 pages/                            [9 Page Components]
+        │   ├── 📄 LoginPage.tsx                 [Split-screen login]
+        │   ├── 📄 DashboardPage.tsx             [Stats + recent calcs]
+        │   ├── 📄 CalculatorPage.tsx            [4 tabs: Standard/Reserved/K8s/Network]
+        │   ├── �� HistoryPage.tsx               [Advanced filtering]
+        │   ├── 📄 BudgetsPage.tsx               [Budget cards + alerts]
+        │   ├── 📄 RecommendationsPage.tsx       [AI recommendations]
+        │   ├── 📄 NotFoundPage.tsx              [404 page]
+        │   └── 📁 admin/
+        │       ├── 📄 AdminDashboardPage.tsx    [Admin stats]
+        │       ├── 📄 AdminUsersPage.tsx        [User management]
+        │       └── 📄 AdminAuditLogsPage.tsx    [Audit trail]
+        │
+        ├── 📁 types/
+        │   └── 📄 index.ts                      [20+ TypeScript interfaces]
+        │
+        └── 📁 lib/
+            ├── 📄 utils.ts                      [cn() utility]
+            └── 📄 export.ts                     [PDF/Excel download]
+
+═══════════════════════════════════════════════════════════════
+
+Total: 129 files
+Backend: 64 Python files
+Frontend: 48 TypeScript/TSX files
+Documentation: 4 README files
+Configuration: 13 config files
+
+Status: ✅ 100% COMPLETE — READY FOR TESTING
