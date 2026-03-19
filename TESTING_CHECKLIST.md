@@ -14,17 +14,64 @@
 
 ### 1. Database Setup
 
+#### Step 1a: Check if PostgreSQL is Already Running
+
 ```bash
-# Create database and user
+# Check if PostgreSQL is running
+ps aux | grep postgres | grep -v grep
+
+# If you see postgres processes, it's already running!
+# Note the port number (usually 5432 or 5433)
+```
+
+#### Step 1b: If PostgreSQL is NOT Running
+
+```bash
+# Start PostgreSQL service (requires root/sudo)
+su -
+systemctl start postgresql
+systemctl enable postgresql  # optional: auto-start on boot
+exit
+```
+
+#### Step 1c: Run Database Setup Script
+
+**Important**: The user is `postgres` (not `postgresql`)
+
+```bash
+cd /home/NikhilRokade/JadeCloudMatrix
+
+# If PostgreSQL is on default port 5432:
 sudo -u postgres psql -f db_setup.sql
 
-# Verify database exists
-sudo -u postgres psql -c "\l" | grep jade_db
-# Should show: jade_db | jade_user | UTF8
+# If PostgreSQL is on port 5433 (or another port):
+psql -h localhost -p 5433 -U $USER -d postgres -f db_setup.sql
 
-# Verify user exists
-sudo -u postgres psql -c "\du" | grep jade_user
-# Should show: jade_user with login permissions
+# Or if the above doesn't work:
+psql -h localhost -p 5433 -U NikhilRokade -d postgres -f db_setup.sql
+```
+
+**Expected Output:**
+```
+CREATE ROLE
+CREATE DATABASE
+GRANT
+You are now connected to database "jade_db" as user "..."
+GRANT
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+```
+
+#### Step 1d: Verify Database Creation
+
+```bash
+# For default port 5432:
+sudo -u postgres psql -c "\l" | grep jade_db
+
+# For port 5433:
+psql -h localhost -p 5433 -U $USER -d postgres -c "\l" | grep jade_db
+
+# Should show: jade_db | jade_user | UTF8
 ```
 
 **✅ Checkpoint**: Database `jade_db` exists and user `jade_user` can connect
@@ -33,25 +80,75 @@ sudo -u postgres psql -c "\du" | grep jade_user
 
 ### 2. Backend Setup & Testing
 
+#### Step 2a: Create Virtual Environment
+
 ```bash
-cd backend
+cd /home/NikhilRokade/JadeCloudMatrix/backend
 
 # Create virtual environment
 python3 -m venv venv
 source venv/bin/activate
+```
 
-# Install dependencies
-pip install -r requirements.txt
+#### Step 2b: Configure Environment Variables
 
-# Create .env from template
-cp .env.example .env
+The `.env` file needs to be configured with the correct database port.
 
-# IMPORTANT: Edit .env file
+```bash
+# Copy template
+cp ../.env.example .env
+
+# Generate JWT secret key
+openssl rand -hex 32
+
+# Edit .env file
 nano .env
-# Required changes:
-#   1. JWT_SECRET_KEY → generate with: openssl rand -hex 32
-#   2. ANTHROPIC_API_KEY → add your key or keep placeholder
-#   3. DATABASE_URL → verify it matches your setup
+```
+
+**Required changes in `.env`:**
+
+1. **DATABASE_URL** - Update with your PostgreSQL port:
+   ```env
+   # If port is 5432 (default):
+   DATABASE_URL=postgresql+asyncpg://jade_user:jade_pass@localhost:5432/jade_db
+   
+   # If port is 5433:
+   DATABASE_URL=postgresql+asyncpg://jade_user:jade_pass@localhost:5433/jade_db
+   ```
+
+2. **JWT_SECRET_KEY** - Paste the generated key:
+   ```env
+   JWT_SECRET_KEY=paste-your-generated-key-here
+   ```
+
+3. **ANTHROPIC_API_KEY** (optional for now):
+   ```env
+   # You can keep the placeholder or add your real key
+   ANTHROPIC_API_KEY=sk-ant-your-key-here
+   ```
+
+Save and exit (Ctrl+O, Enter, Ctrl+X in nano)
+
+#### Step 2c: Install Dependencies & Setup Database
+
+**Option A: Use the setup script (easiest)**
+
+```bash
+# Make sure you're in backend/ with venv activated
+./setup_and_run.sh
+```
+
+This automatically:
+- Installs all Python dependencies
+- Runs database migrations
+- Seeds initial data
+
+**Option B: Manual setup**
+
+```bash
+# Install dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
 
 # Run Alembic migrations
 alembic upgrade head
@@ -64,9 +161,23 @@ python scripts/seed.py
 #   - Created regions: 15+ regions
 #   - Created users: admin, user
 #   - Ingestion complete
+```
 
-# Start backend server
+#### Step 2d: Start Backend Server
+
+```bash
+cd /home/NikhilRokade/JadeCloudMatrix/backend
+source venv/bin/activate
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Expected output:**
+```
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process
+INFO:     Started server process
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
 ```
 
 **Test backend endpoints:**
@@ -232,6 +343,27 @@ npm run dev
 
 ## 🐛 Known Issues & Solutions
 
+### Issue: "unknown user: postgresql" error
+
+**Solution**: The correct user is `postgres` (not `postgresql`)
+```bash
+# Correct command:
+sudo -u postgres psql -f db_setup.sql
+
+# NOT: sudo -u postgresql psql -f db_setup.sql
+```
+
+### Issue: PostgreSQL "Access denied" when starting service
+
+**Possible causes:**
+1. PostgreSQL is already running (check with `ps aux | grep postgres`)
+2. You need to use `su` to become root first:
+   ```bash
+   su -
+   systemctl start postgresql
+   exit
+   ```
+
 ### Issue: Backend import errors
 
 **Solution**:
@@ -255,12 +387,20 @@ npm install
 
 **Solution**:
 ```bash
-# Check PostgreSQL is running
-sudo systemctl status postgresql
-sudo systemctl start postgresql
+# Check if PostgreSQL is running
+ps aux | grep postgres | grep -v grep
 
-# Check database exists
-sudo -u postgres psql -c "\l" | grep jade_db
+# Check what port it's running on
+netstat -an | grep LISTEN | grep 543
+
+# Common ports: 5432 (default) or 5433
+
+# Update DATABASE_URL in backend/.env with correct port
+nano backend/.env
+# Change: postgresql+asyncpg://jade_user:jade_pass@localhost:5433/jade_db
+
+# Verify database exists on that port
+psql -h localhost -p 5433 -U $USER -d postgres -c "\l" | grep jade_db
 ```
 
 ### Issue: 401 Unauthorized on all API calls
@@ -415,3 +555,85 @@ If you encounter issues during testing:
 **Implementation Status: 100% Complete**  
 **Ready for Testing: YES**  
 **Next Phase: Testing → Deployment**
+
+---
+
+## 🎯 Quick Reference
+
+### Default Credentials
+```
+Admin: admin@jadeglobal.com / admin123
+User:  user@jadeglobal.com / user123
+```
+
+### Database Connection
+```
+Host:     localhost
+Port:     5433 (or 5432 - check with: ps aux | grep postgres)
+Database: jade_db
+User:     jade_user
+Password: jade_pass
+```
+
+### Service URLs
+```
+Backend:  http://localhost:8000
+API Docs: http://localhost:8000/docs
+Frontend: http://localhost:5173
+```
+
+### Common Commands
+
+**Check PostgreSQL Status:**
+```bash
+ps aux | grep postgres | grep -v grep
+netstat -an | grep LISTEN | grep 543
+```
+
+**Check PostgreSQL Port:**
+```bash
+ps aux | grep postgres | head -1
+# Look for -p flag (e.g., -p 5433)
+```
+
+**Backend:**
+```bash
+cd /home/NikhilRokade/JadeCloudMatrix/backend
+source venv/bin/activate
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Frontend:**
+```bash
+cd /home/NikhilRokade/JadeCloudMatrix/frontend
+npm run dev
+```
+
+**Test Backend Health:**
+```bash
+curl http://localhost:8000/api/healthz
+```
+
+---
+
+## 📋 Troubleshooting Checklist
+
+Before asking for help, verify:
+
+- [ ] PostgreSQL is running (`ps aux | grep postgres`)
+- [ ] Database `jade_db` exists (run `\l` in psql)
+- [ ] Backend `.env` has correct DATABASE_URL with right port
+- [ ] Backend `.env` has JWT_SECRET_KEY set (not default placeholder)
+- [ ] Virtual environment is activated (`source venv/bin/activate`)
+- [ ] Dependencies are installed (`pip list | grep fastapi`)
+- [ ] Migrations ran successfully (`alembic current`)
+- [ ] Seed script completed without errors
+- [ ] Backend is running on port 8000 (check with `netstat -an | grep 8000`)
+- [ ] Frontend dependencies installed (`ls frontend/node_modules`)
+- [ ] Frontend is running on port 5173 (check terminal output)
+- [ ] Browser can access http://localhost:5173
+
+---
+
+**Last Updated**: 2026-03-19  
+**Status**: ✅ Verified working with PostgreSQL on port 5433
