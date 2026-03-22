@@ -31,7 +31,7 @@ class StoragePricing(Base):
     id = Column(Integer, primary_key=True, index=True)
     region_id = Column(Integer, ForeignKey("regions.id", ondelete="CASCADE"), nullable=False, index=True)
     provider_id = Column(Integer, ForeignKey("providers.id", ondelete="CASCADE"), nullable=False, index=True)
-    storage_type = Column(Enum(StorageType), nullable=False)
+    storage_type = Column(Enum(StorageType, name="storage_type"), nullable=False)
     storage_name = Column(String(100), nullable=False)
     price_per_gb = Column(Numeric(10, 6), nullable=False)
     price_per_gb_month = Column(Numeric(10, 6), nullable=False)

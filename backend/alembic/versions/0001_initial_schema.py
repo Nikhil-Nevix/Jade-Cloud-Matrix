@@ -17,13 +17,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Create enums
-    op.execute("CREATE TYPE user_role AS ENUM ('admin', 'user')")
-    op.execute("CREATE TYPE storage_type AS ENUM ('block', 'object')")
-    op.execute("CREATE TYPE reserved_term AS ENUM ('1yr', '3yr')")
-    op.execute("CREATE TYPE reserved_type AS ENUM ('no_upfront', 'partial_upfront', 'all_upfront')")
-    op.execute("CREATE TYPE budget_period AS ENUM ('monthly', 'quarterly', 'annual')")
-    op.execute("CREATE TYPE alert_status AS ENUM ('active', 'acknowledged', 'resolved')")
+    # Note: Enums are created automatically by SQLAlchemy when creating tables with Enum columns
     
     # Providers
     op.create_table(
@@ -83,7 +77,8 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
         sa.ForeignKeyConstraint(['provider_id'], ['providers.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['region_id'], ['regions.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id')
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('provider_id', 'region_id', 'instance_type', 'os_type')
     )
     op.create_index('ix_compute_pricing_id', 'compute_pricing', ['id'])
     op.create_index('ix_compute_pricing_instance_type', 'compute_pricing', ['instance_type'])
@@ -103,7 +98,8 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
         sa.ForeignKeyConstraint(['provider_id'], ['providers.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['region_id'], ['regions.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id')
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('provider_id', 'region_id', 'storage_type', 'storage_name')
     )
     op.create_index('ix_storage_pricing_id', 'storage_pricing', ['id'])
     op.create_index('ix_storage_pricing_provider_region', 'storage_pricing', ['provider_id', 'region_id'])
@@ -125,7 +121,8 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
         sa.ForeignKeyConstraint(['provider_id'], ['providers.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['region_id'], ['regions.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id')
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('provider_id', 'region_id', 'instance_type', 'os_type', 'term', 'payment_type')
     )
     op.create_index('ix_reserved_pricing_id', 'reserved_pricing', ['id'])
     op.create_index('ix_reserved_pricing_instance_type', 'reserved_pricing', ['instance_type'])
@@ -146,7 +143,8 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
         sa.ForeignKeyConstraint(['provider_id'], ['providers.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['region_id'], ['regions.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id')
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('provider_id', 'region_id', 'node_type')
     )
     op.create_index('ix_kubernetes_pricing_id', 'kubernetes_pricing', ['id'])
     op.create_index('ix_kubernetes_pricing_provider_region', 'kubernetes_pricing', ['provider_id', 'region_id'])
@@ -163,7 +161,8 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
         sa.ForeignKeyConstraint(['provider_id'], ['providers.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['source_region_id'], ['regions.id']),
-        sa.PrimaryKeyConstraint('id')
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('provider_id', 'source_region_id', 'destination_type')
     )
     op.create_index('ix_network_pricing_id', 'network_pricing', ['id'])
     op.create_index('ix_network_pricing_provider', 'network_pricing', ['provider_id'])

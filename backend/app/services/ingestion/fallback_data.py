@@ -63,13 +63,13 @@ def get_aws_storage_data():
 def get_aws_reserved_data():
     """AWS reserved instance pricing fallback (us-east-1, t3.medium Linux example)"""
     return [
-        {"region": "us-east-1", "instance": "t3.medium", "os": "Linux", "term": "1yr", "payment": "no_upfront", "upfront": 0, "monthly": 14.60, "eff_hourly": 0.020, "savings": 51.0},
-        {"region": "us-east-1", "instance": "t3.medium", "os": "Linux", "term": "1yr", "payment": "partial_upfront", "upfront": 88, "monthly": 7.30, "eff_hourly": 0.017, "savings": 59.0},
-        {"region": "us-east-1", "instance": "t3.medium", "os": "Linux", "term": "1yr", "payment": "all_upfront", "upfront": 175, "monthly": 0, "eff_hourly": 0.020, "savings": 52.0},
-        {"region": "us-east-1", "instance": "t3.medium", "os": "Linux", "term": "3yr", "payment": "all_upfront", "upfront": 290, "monthly": 0, "eff_hourly": 0.011, "savings": 74.0},
-        {"region": "us-east-1", "instance": "m5.large", "os": "Linux", "term": "1yr", "payment": "no_upfront", "upfront": 0, "monthly": 42.00, "eff_hourly": 0.058, "savings": 40.0},
-        {"region": "us-east-1", "instance": "m5.large", "os": "Linux", "term": "1yr", "payment": "all_upfront", "upfront": 504, "monthly": 0, "eff_hourly": 0.057, "savings": 41.0},
-        {"region": "us-east-1", "instance": "m5.large", "os": "Linux", "term": "3yr", "payment": "all_upfront", "upfront": 840, "monthly": 0, "eff_hourly": 0.032, "savings": 67.0},
+        {"region": "us-east-1", "instance": "t3.medium", "os": "Linux", "term": "one_yr", "payment": "no_upfront", "upfront": 0, "monthly": 14.60, "eff_hourly": 0.020, "savings": 51.0},
+        {"region": "us-east-1", "instance": "t3.medium", "os": "Linux", "term": "one_yr", "payment": "partial_upfront", "upfront": 88, "monthly": 7.30, "eff_hourly": 0.017, "savings": 59.0},
+        {"region": "us-east-1", "instance": "t3.medium", "os": "Linux", "term": "one_yr", "payment": "all_upfront", "upfront": 175, "monthly": 0, "eff_hourly": 0.020, "savings": 52.0},
+        {"region": "us-east-1", "instance": "t3.medium", "os": "Linux", "term": "three_yr", "payment": "all_upfront", "upfront": 290, "monthly": 0, "eff_hourly": 0.011, "savings": 74.0},
+        {"region": "us-east-1", "instance": "m5.large", "os": "Linux", "term": "one_yr", "payment": "no_upfront", "upfront": 0, "monthly": 42.00, "eff_hourly": 0.058, "savings": 40.0},
+        {"region": "us-east-1", "instance": "m5.large", "os": "Linux", "term": "one_yr", "payment": "all_upfront", "upfront": 504, "monthly": 0, "eff_hourly": 0.057, "savings": 41.0},
+        {"region": "us-east-1", "instance": "m5.large", "os": "Linux", "term": "three_yr", "payment": "all_upfront", "upfront": 840, "monthly": 0, "eff_hourly": 0.032, "savings": 67.0},
     ]
 
 
@@ -122,9 +122,9 @@ def get_azure_storage_data():
 def get_azure_reserved_data():
     """Azure reserved instance pricing fallback"""
     return [
-        {"region": "eastus", "instance": "Standard_D2s_v3", "os": "Linux", "term": "1yr", "payment": "no_upfront", "upfront": 0, "monthly": 42.00, "eff_hourly": 0.058, "savings": 40.0},
-        {"region": "eastus", "instance": "Standard_D2s_v3", "os": "Linux", "term": "1yr", "payment": "all_upfront", "upfront": 504, "monthly": 0, "eff_hourly": 0.057, "savings": 41.0},
-        {"region": "eastus", "instance": "Standard_D2s_v3", "os": "Linux", "term": "3yr", "payment": "all_upfront", "upfront": 840, "monthly": 0, "eff_hourly": 0.032, "savings": 67.0},
+        {"region": "eastus", "instance": "Standard_D2s_v3", "os": "Linux", "term": "one_yr", "payment": "no_upfront", "upfront": 0, "monthly": 42.00, "eff_hourly": 0.058, "savings": 40.0},
+        {"region": "eastus", "instance": "Standard_D2s_v3", "os": "Linux", "term": "one_yr", "payment": "all_upfront", "upfront": 504, "monthly": 0, "eff_hourly": 0.057, "savings": 41.0},
+        {"region": "eastus", "instance": "Standard_D2s_v3", "os": "Linux", "term": "three_yr", "payment": "all_upfront", "upfront": 840, "monthly": 0, "eff_hourly": 0.032, "savings": 67.0},
     ]
 
 
@@ -177,10 +177,10 @@ def get_gcp_storage_data():
 def get_gcp_reserved_data():
     """GCP committed use discounts fallback (1yr/3yr CUDs)"""
     return [
-        {"region": "us-east1", "instance": "e2-standard-2", "os": "Linux", "term": "1yr", "payment": "all_upfront", "upfront": 0, "monthly": 34.75, "eff_hourly": 0.048, "savings": 28.0},
-        {"region": "us-east1", "instance": "e2-standard-2", "os": "Linux", "term": "3yr", "payment": "all_upfront", "upfront": 0, "monthly": 24.80, "eff_hourly": 0.034, "savings": 49.0},
-        {"region": "us-east1", "instance": "n2-standard-2", "os": "Linux", "term": "1yr", "payment": "all_upfront", "upfront": 0, "monthly": 50.40, "eff_hourly": 0.069, "savings": 29.0},
-        {"region": "us-east1", "instance": "n2-standard-2", "os": "Linux", "term": "3yr", "payment": "all_upfront", "upfront": 0, "monthly": 36.00, "eff_hourly": 0.049, "savings": 50.0},
+        {"region": "us-east1", "instance": "e2-standard-2", "os": "Linux", "term": "one_yr", "payment": "all_upfront", "upfront": 0, "monthly": 34.75, "eff_hourly": 0.048, "savings": 28.0},
+        {"region": "us-east1", "instance": "e2-standard-2", "os": "Linux", "term": "three_yr", "payment": "all_upfront", "upfront": 0, "monthly": 24.80, "eff_hourly": 0.034, "savings": 49.0},
+        {"region": "us-east1", "instance": "n2-standard-2", "os": "Linux", "term": "one_yr", "payment": "all_upfront", "upfront": 0, "monthly": 50.40, "eff_hourly": 0.069, "savings": 29.0},
+        {"region": "us-east1", "instance": "n2-standard-2", "os": "Linux", "term": "three_yr", "payment": "all_upfront", "upfront": 0, "monthly": 36.00, "eff_hourly": 0.049, "savings": 50.0},
     ]
 
 

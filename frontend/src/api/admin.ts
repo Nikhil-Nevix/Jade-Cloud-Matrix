@@ -45,3 +45,10 @@ export const triggerIngestion = async (): Promise<{ message: string }> => {
   const response = await api.post("/v1/admin/ingest");
   return response.data;
 };
+
+// Aliases for compatibility
+export const getAdminUsers = getAllUsers;
+export const createAdminUser = createUser;
+export const updateAdminUser = updateUser;
+export const deleteAdminUser = deleteUser;
+export const getAdminAuditLogs = getAuditLogs;

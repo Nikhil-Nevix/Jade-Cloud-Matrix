@@ -10,3 +10,6 @@ export const getProviderRegions = async (providerId: number): Promise<Region[]> 
   const response = await api.get<Region[]>(`/v1/providers/${providerId}/regions`);
   return response.data;
 };
+
+// Alias for compatibility
+export const getRegions = getProviderRegions;

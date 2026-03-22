@@ -24,3 +24,12 @@ export async function exportCalculation(
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+// Convenience functions
+export async function downloadPDF(calcId: number, token: string): Promise<void> {
+  return exportCalculation(calcId, "pdf", token);
+}
+
+export async function downloadExcel(calcId: number, token: string): Promise<void> {
+  return exportCalculation(calcId, "excel", token);
+}

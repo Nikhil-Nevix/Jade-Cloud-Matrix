@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.database import AsyncSessionLocal
 from app.models.provider import Provider, Region
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.core.security import hash_password
 from app.services.ingestion.runner import run_full_ingestion
 
@@ -53,54 +53,79 @@ async def seed_database():
     async with AsyncSessionLocal() as db:
         print("Starting database seed...")
         
-        # Create providers
+        from sqlalchemy import select
+        
+        # Create providers (skip if exist)
         providers_map = {}
         for provider_name in PROVIDERS:
-            provider = Provider(name=provider_name)
-            db.add(provider)
-            await db.flush()
-            providers_map[provider_name] = provider
-            print(f"✓ Created provider: {provider_name}")
+            result = await db.execute(select(Provider).where(Provider.name == provider_name))
+            existing = result.scalar_one_or_none()
+            if existing:
+                providers_map[provider_name] = existing
+                print(f"✓ Provider already exists: {provider_name}")
+            else:
+                provider = Provider(name=provider_name)
+                db.add(provider)
+                await db.flush()
+                providers_map[provider_name] = provider
+                print(f"✓ Created provider: {provider_name}")
         
         await db.commit()
         
-        # Create regions
+        # Create regions (skip if exist)
+        region_count = 0
         for region_code, region_name in AWS_REGIONS:
-            region = Region(
-                provider_id=providers_map["AWS"].id,
-                region_code=region_code,
-                region_name=region_name,
-            )
-            db.add(region)
+            result = await db.execute(select(Region).where(Region.region_code == region_code))
+            if not result.scalar_one_or_none():
+                region = Region(
+                    provider_id=providers_map["AWS"].id,
+                    region_code=region_code,
+                    region_name=region_name,
+                )
+                db.add(region)
+                region_count += 1
         
         for region_code, region_name in AZURE_REGIONS:
-            region = Region(
-                provider_id=providers_map["Azure"].id,
-                region_code=region_code,
-                region_name=region_name,
-            )
-            db.add(region)
+            result = await db.execute(select(Region).where(Region.region_code == region_code))
+            if not result.scalar_one_or_none():
+                region = Region(
+                    provider_id=providers_map["Azure"].id,
+                    region_code=region_code,
+                    region_name=region_name,
+                )
+                db.add(region)
+                region_count += 1
         
         for region_code, region_name in GCP_REGIONS:
-            region = Region(
-                provider_id=providers_map["GCP"].id,
-                region_code=region_code,
-                region_name=region_name,
-            )
-            db.add(region)
+            result = await db.execute(select(Region).where(Region.region_code == region_code))
+            if not result.scalar_one_or_none():
+                region = Region(
+                    provider_id=providers_map["GCP"].id,
+                    region_code=region_code,
+                    region_name=region_name,
+                )
+                db.add(region)
+                region_count += 1
         
         await db.commit()
-        print(f"✓ Created {len(AWS_REGIONS) + len(AZURE_REGIONS) + len(GCP_REGIONS)} regions")
+        if region_count > 0:
+            print(f"✓ Created {region_count} regions")
+        else:
+            print(f"✓ Regions already exist")
         
-        # Create users
+        # Create users (skip if exist)
         for user_data in USERS:
-            user = User(
-                email=user_data["email"],
-                password_hash=hash_password(user_data["password"]),
-                role=user_data["role"],
-            )
-            db.add(user)
-            print(f"✓ Created user: {user_data['email']} ({user_data['role']})")
+            result = await db.execute(select(User).where(User.email == user_data["email"]))
+            if result.scalar_one_or_none():
+                print(f"✓ User already exists: {user_data['email']} ({user_data['role']})")
+            else:
+                user = User(
+                    email=user_data["email"],
+                    password_hash=hash_password(user_data["password"]),
+                    role=UserRole(user_data["role"]),
+                )
+                db.add(user)
+                print(f"✓ Created user: {user_data['email']} ({user_data['role']})")
         
         await db.commit()
         

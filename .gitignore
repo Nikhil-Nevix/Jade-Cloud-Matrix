@@ -55,3 +55,4 @@ frontend/build/
 
 # Alembic
 alembic/versions/__pycache__/
+backend/GCP_Credentials.json

@@ -6,10 +6,17 @@ from sqlalchemy import select, func, and_, or_
 from app.dependencies import get_db
 from app.models.calculation import Calculation
 from app.models.user import User
-from app.schemas.calculation import CalculateRequest, CalculationResult, CalculationListResponse, ProviderBreakdown
+from app.schemas.calculation import (
+    CalculateRequest,
+    MultiCloudCompareRequest,
+    CalculationResult,
+    CalculationListResponse,
+    ProviderBreakdown
+)
 from app.core.security import get_current_user
 from app.core.audit import log_audit
 from app.services.pricing_engine import calculate_standard_pricing
+from app.services.multicloud_engine import calculate_multicloud_comparison
 
 router = APIRouter()
 
@@ -54,6 +61,75 @@ async def create_calculation(
         input_data=calc_request.model_dump()
     )
     
+    # Build response
+    return CalculationResult(
+        id=calc.id,
+        user_id=calc.user_id,
+        calc_type=calc.calc_type,
+        input_json=calc.input_json,
+        result_json=calc.result_json,
+        cheapest_provider=calc.cheapest_provider,
+        aws_total_monthly=float(calc.aws_total_monthly) if calc.aws_total_monthly else None,
+        azure_total_monthly=float(calc.azure_total_monthly) if calc.azure_total_monthly else None,
+        gcp_total_monthly=float(calc.gcp_total_monthly) if calc.gcp_total_monthly else None,
+        aws_total_annual=float(calc.aws_total_monthly) * 12 if calc.aws_total_monthly else None,
+        azure_total_annual=float(calc.azure_total_monthly) * 12 if calc.azure_total_monthly else None,
+        gcp_total_annual=float(calc.gcp_total_monthly) * 12 if calc.gcp_total_monthly else None,
+        duration_months=calc.duration_months,
+        created_at=calc.created_at,
+        provider_breakdowns=[ProviderBreakdown(**bd) for bd in result.get("provider_breakdowns", [])]
+    )
+
+
+@router.post("/multicloud-compare", response_model=CalculationResult, status_code=status.HTTP_201_CREATED)
+async def create_multicloud_comparison(
+    request: Request,
+    calc_request: MultiCloudCompareRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Create a multi-cloud cost comparison calculation.
+
+    This endpoint automatically maps equivalent instances across AWS, Azure, and GCP
+    based on vCPU and memory specs, then compares total costs.
+    """
+    # Convert selections to dicts for engine
+    compute_selections_dicts = [sel.model_dump() for sel in calc_request.compute_selections]
+    storage_selections_dicts = [sel.model_dump() for sel in calc_request.storage_selections]
+
+    result = await calculate_multicloud_comparison(
+        db,
+        compute_selections_dicts,
+        storage_selections_dicts,
+        calc_request.duration_months,
+    )
+
+    # Save to database
+    calc = Calculation(
+        user_id=current_user.id,
+        calc_type="multicloud",
+        input_json=calc_request.model_dump(),
+        result_json=result,
+        cheapest_provider=result.get("cheapest_provider"),
+        aws_total_monthly=result.get("aws_total_monthly"),
+        azure_total_monthly=result.get("azure_total_monthly"),
+        gcp_total_monthly=result.get("gcp_total_monthly"),
+        duration_months=calc_request.duration_months,
+    )
+    db.add(calc)
+    await db.commit()
+    await db.refresh(calc)
+
+    await log_audit(
+        db,
+        action="calculate_multicloud_comparison",
+        status="success",
+        user_id=current_user.id,
+        ip_address=request.client.host if request.client else None,
+        input_data=calc_request.model_dump()
+    )
+
     # Build response
     return CalculationResult(
         id=calc.id,

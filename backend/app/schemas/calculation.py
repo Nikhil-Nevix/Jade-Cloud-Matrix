@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, ConfigDict
 
 
@@ -21,6 +21,32 @@ class CalculateRequest(BaseModel):
     compute_selections: list[ComputeSelection] = []
     storage_selections: list[StorageSelection] = []
     duration_months: int
+
+
+# Multi-cloud wizard schemas
+class MultiCloudCompareRequest(BaseModel):
+    """Request schema for multi-cloud comparison wizard."""
+    compute_selections: List[ComputeSelection] = []
+    storage_selections: List[StorageSelection] = []
+    duration_months: int
+
+
+class EquivalentInstanceInfo(BaseModel):
+    """Information about an equivalent instance for a provider."""
+    instance_type: str
+    vcpu: int
+    memory_gb: float
+    price_per_month: float
+
+
+class InstanceMapping(BaseModel):
+    """Mapping showing how a base instance was mapped across providers."""
+    base_instance: str
+    base_provider: str
+    vcpu: int
+    memory_gb: float
+    quantity: int
+    equivalents: Dict[str, Optional[EquivalentInstanceInfo]]
 
 
 class ProviderBreakdown(BaseModel):

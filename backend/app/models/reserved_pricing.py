@@ -5,8 +5,8 @@ from app.database import Base
 
 
 class ReservedTerm(str, enum.Enum):
-    one_yr = "1yr"
-    three_yr = "3yr"
+    one_yr = "one_yr"
+    three_yr = "three_yr"
 
 
 class ReservedPaymentType(str, enum.Enum):
@@ -23,8 +23,8 @@ class ReservedPricing(Base):
     provider_id = Column(Integer, ForeignKey("providers.id", ondelete="CASCADE"), nullable=False, index=True)
     instance_type = Column(String(100), nullable=False, index=True)
     os_type = Column(String(50), nullable=False)
-    term = Column(Enum(ReservedTerm), nullable=False)
-    payment_type = Column(Enum(ReservedPaymentType), nullable=False)
+    term = Column(Enum(ReservedTerm, name="reserved_term"), nullable=False)
+    payment_type = Column(Enum(ReservedPaymentType, name="reserved_type"), nullable=False)
     upfront_cost = Column(Numeric(10, 2), nullable=False, default=0)
     monthly_cost = Column(Numeric(10, 2), nullable=False)
     effective_hourly = Column(Numeric(10, 6), nullable=False)

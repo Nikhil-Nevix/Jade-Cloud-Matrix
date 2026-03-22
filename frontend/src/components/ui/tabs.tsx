@@ -19,6 +19,10 @@ Tabs.displayName = "Tabs"
 const TabsList = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, children, ...props }, ref) => {
     const context = props as any;
+
+    // Filter out non-standard props that shouldn't be passed to div element
+    const { value, onValueChange, ...divProps } = props as any;
+
     return (
       <div
         ref={ref}
@@ -26,7 +30,7 @@ const TabsList = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivEl
           "inline-flex h-10 items-center justify-center rounded-md bg-gray-100 p-1 text-gray-500",
           className
         )}
-        {...props}
+        {...divProps}
       >
         {React.Children.map(children, (child) => {
           if (React.isValidElement(child)) {
@@ -46,7 +50,10 @@ const TabsTrigger = React.forwardRef<
 >(({ className, value, ...props }, ref) => {
   const context = props as any;
   const isActive = context.value === value;
-  
+
+  // Filter out non-standard props that shouldn't be passed to button element
+  const { value: contextValue, onValueChange, ...buttonProps } = props as any;
+
   return (
     <button
       ref={ref}
@@ -60,7 +67,7 @@ const TabsTrigger = React.forwardRef<
           : "text-gray-600 hover:text-gray-900",
         className
       )}
-      {...props}
+      {...buttonProps}
     />
   );
 })
@@ -72,14 +79,17 @@ const TabsContent = React.forwardRef<
 >(({ className, value, children, ...props }, ref) => {
   const context = props as any;
   const isActive = context.value === value;
-  
+
+  // Filter out non-standard props that shouldn't be passed to div element
+  const { value: contextValue, onValueChange, ...divProps } = props as any;
+
   if (!isActive) return null;
-  
+
   return (
     <div
       ref={ref}
       className={cn("mt-2 ring-offset-white focus-visible:outline-none focus-visible:ring-2", className)}
-      {...props}
+      {...divProps}
     >
       {children}
     </div>
