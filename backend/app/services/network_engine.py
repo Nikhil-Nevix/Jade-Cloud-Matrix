@@ -38,9 +38,9 @@ async def calculate_network_cost(
         pricing, provider_name, region_code = row
         
         free_tier = float(pricing.free_tier_gb)
-        billable_gb = max(0, transfer.transfer_gb - free_tier)
+        billable_gb = max(0, float(transfer.transfer_gb) - free_tier)
         cost_monthly = billable_gb * float(pricing.price_per_gb)
-        cost_for_duration = cost_monthly * duration_months
+        cost_for_duration = cost_monthly * float(duration_months)
         
         provider_breakdowns.append({
             "provider_name": provider_name,

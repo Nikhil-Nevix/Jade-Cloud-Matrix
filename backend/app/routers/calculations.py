@@ -94,16 +94,30 @@ async def create_multicloud_comparison(
     This endpoint automatically maps equivalent instances across AWS, Azure, and GCP
     based on vCPU and memory specs, then compares total costs.
     """
-    # Convert selections to dicts for engine
-    compute_selections_dicts = [sel.model_dump() for sel in calc_request.compute_selections]
-    storage_selections_dicts = [sel.model_dump() for sel in calc_request.storage_selections]
+    import logging
+    logger = logging.getLogger(__name__)
 
-    result = await calculate_multicloud_comparison(
-        db,
-        compute_selections_dicts,
-        storage_selections_dicts,
-        calc_request.duration_months,
-    )
+    try:
+        logger.info(f"Received multicloud request: {len(calc_request.compute_selections)} compute, {len(calc_request.storage_selections)} storage")
+
+        # Convert selections to dicts for engine
+        compute_selections_dicts = [sel.model_dump() for sel in calc_request.compute_selections]
+        storage_selections_dicts = [sel.model_dump() for sel in calc_request.storage_selections]
+
+        logger.info(f"Calling calculate_multicloud_comparison...")
+        result = await calculate_multicloud_comparison(
+            db,
+            compute_selections_dicts,
+            storage_selections_dicts,
+            calc_request.duration_months,
+        )
+        logger.info(f"Calculation successful, cheapest provider: {result.get('cheapest_provider')}")
+    except Exception as e:
+        logger.error(f"Error in multicloud calculation: {type(e).__name__}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Calculation failed: {type(e).__name__}: {str(e)}"
+        )
 
     # Save to database
     calc = Calculation(

@@ -43,21 +43,52 @@ def get_aws_compute_data():
 
 
 def get_aws_storage_data():
-    """AWS storage pricing fallback"""
-    return [
-        # S3 (object storage) - same price across regions
-        {"region": "us-east-1", "type": "object", "name": "S3 Standard", "price_gb_month": 0.023},
-        {"region": "us-west-2", "type": "object", "name": "S3 Standard", "price_gb_month": 0.023},
-        {"region": "eu-west-1", "type": "object", "name": "S3 Standard", "price_gb_month": 0.024},
-        {"region": "ap-south-1", "type": "object", "name": "S3 Standard", "price_gb_month": 0.025},
-        {"region": "ap-southeast-1", "type": "object", "name": "S3 Standard", "price_gb_month": 0.025},
-        # EBS gp3 (block storage)
-        {"region": "us-east-1", "type": "block", "name": "EBS gp3", "price_gb_month": 0.080},
-        {"region": "us-west-2", "type": "block", "name": "EBS gp3", "price_gb_month": 0.080},
-        {"region": "eu-west-1", "type": "block", "name": "EBS gp3", "price_gb_month": 0.089},
-        {"region": "ap-south-1", "type": "block", "name": "EBS gp3", "price_gb_month": 0.095},
-        {"region": "ap-southeast-1", "type": "block", "name": "EBS gp3", "price_gb_month": 0.088},
+    """AWS storage pricing fallback - comprehensive coverage"""
+    storage_data = []
+    regions = ["us-east-1", "us-west-2", "eu-west-1", "ap-south-1", "ap-southeast-1"]
+    
+    # EBS Block Storage pricing (per GB-month)
+    ebs_types = [
+        {"name": "EBS gp3", "us-east-1": 0.080, "us-west-2": 0.080, "eu-west-1": 0.089, "ap-south-1": 0.095, "ap-southeast-1": 0.088},
+        {"name": "EBS gp2", "us-east-1": 0.100, "us-west-2": 0.100, "eu-west-1": 0.110, "ap-south-1": 0.114, "ap-southeast-1": 0.120},
+        {"name": "EBS io2", "us-east-1": 0.125, "us-west-2": 0.125, "eu-west-1": 0.138, "ap-south-1": 0.142, "ap-southeast-1": 0.142},
+        {"name": "EBS io1", "us-east-1": 0.125, "us-west-2": 0.125, "eu-west-1": 0.138, "ap-south-1": 0.142, "ap-southeast-1": 0.142},
+        {"name": "EBS st1", "us-east-1": 0.045, "us-west-2": 0.045, "eu-west-1": 0.050, "ap-south-1": 0.054, "ap-southeast-1": 0.054},
+        {"name": "EBS sc1", "us-east-1": 0.015, "us-west-2": 0.015, "eu-west-1": 0.019, "ap-south-1": 0.020, "ap-southeast-1": 0.020},
     ]
+    
+    # S3 Object Storage pricing (per GB-month)
+    s3_types = [
+        {"name": "S3 Standard", "us-east-1": 0.023, "us-west-2": 0.023, "eu-west-1": 0.024, "ap-south-1": 0.025, "ap-southeast-1": 0.025},
+        {"name": "S3 Intelligent-Tiering", "us-east-1": 0.023, "us-west-2": 0.023, "eu-west-1": 0.024, "ap-south-1": 0.025, "ap-southeast-1": 0.025},
+        {"name": "S3 Standard-IA", "us-east-1": 0.0125, "us-west-2": 0.0125, "eu-west-1": 0.0138, "ap-south-1": 0.0145, "ap-southeast-1": 0.0145},
+        {"name": "S3 One Zone-IA", "us-east-1": 0.010, "us-west-2": 0.010, "eu-west-1": 0.011, "ap-south-1": 0.0116, "ap-southeast-1": 0.0116},
+        {"name": "S3 Glacier Instant Retrieval", "us-east-1": 0.004, "us-west-2": 0.004, "eu-west-1": 0.0044, "ap-south-1": 0.0046, "ap-southeast-1": 0.0046},
+        {"name": "S3 Glacier Flexible Retrieval", "us-east-1": 0.0036, "us-west-2": 0.0036, "eu-west-1": 0.0040, "ap-south-1": 0.0042, "ap-southeast-1": 0.0042},
+        {"name": "S3 Glacier Deep Archive", "us-east-1": 0.00099, "us-west-2": 0.00099, "eu-west-1": 0.00108, "ap-south-1": 0.00114, "ap-southeast-1": 0.00114},
+    ]
+    
+    # Build EBS data for all regions
+    for ebs in ebs_types:
+        for region in regions:
+            storage_data.append({
+                "region": region,
+                "type": "block",
+                "name": ebs["name"],
+                "price_gb_month": ebs[region]
+            })
+    
+    # Build S3 data for all regions
+    for s3 in s3_types:
+        for region in regions:
+            storage_data.append({
+                "region": region,
+                "type": "object",
+                "name": s3["name"],
+                "price_gb_month": s3[region]
+            })
+    
+    return storage_data
 
 
 def get_aws_reserved_data():

@@ -74,6 +74,7 @@ async def _ingest_aws_live(db: AsyncSession):
     # Fetch compute pricing for each region
     compute_count = 0
     for region_code in region_codes:
+        region_count = 0
         try:
             # Use paginator to handle large responses
             paginator = pricing_client.get_paginator('get_products')
@@ -97,18 +98,23 @@ async def _ingest_aws_live(db: AsyncSession):
             for page in page_iterator:
                 for price_item in page.get('PriceList', []):
                     try:
-                        compute_count += await _process_aws_compute_price(price_item, aws_regions, region_code, db)
+                        region_count += await _process_aws_compute_price(price_item, aws_regions, region_code, db)
                     except Exception as e:
                         logger.warning(f"Error processing AWS compute price: {e}")
                         continue
-
-                # Limit pages to avoid excessive API calls during dev
-                if compute_count > 500:  # Adjust as needed
-                    logger.info(f"Reached limit of 500 instances for {region_code}, stopping pagination")
-                    break
+            
+            # Commit after each region to avoid transaction buildup
+            await db.commit()
+            compute_count += region_count
+            logger.info(f"Committed {region_count} instances for region {region_code}")
 
         except ClientError as e:
             logger.error(f"AWS API error for region {region_code}: {e}")
+            await db.rollback()
+            continue
+        except Exception as e:
+            logger.error(f"Error processing region {region_code}: {e}")
+            await db.rollback()
             continue
 
     logger.info(f"Ingested {compute_count} AWS compute pricing records from live API")
@@ -116,10 +122,22 @@ async def _ingest_aws_live(db: AsyncSession):
     # For storage and reserved pricing, use fallback for now
     # (Implementing full AWS storage/reserved API is complex and can be added later)
     logger.info("Using fallback data for AWS storage and reserved pricing")
-    await _ingest_aws_storage_fallback(db, aws_regions)
-    await _ingest_aws_reserved_fallback(db, aws_regions)
+    try:
+        await _ingest_aws_storage_fallback(db, aws_regions)
+        await db.commit()
+        logger.info("AWS storage fallback data committed")
+    except Exception as e:
+        logger.error(f"Error ingesting AWS storage fallback: {e}")
+        await db.rollback()
+    
+    try:
+        await _ingest_aws_reserved_fallback(db, aws_regions)
+        await db.commit()
+        logger.info("AWS reserved fallback data committed")
+    except Exception as e:
+        logger.error(f"Error ingesting AWS reserved fallback: {e}")
+        await db.rollback()
 
-    await db.commit()
     logger.info("AWS live pricing ingestion completed.")
 
 

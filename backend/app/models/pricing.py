@@ -21,7 +21,7 @@ class ComputePricing(Base):
     price_per_month = Column(Numeric(10, 2), nullable=False)
     price_per_year = Column(Numeric(10, 2), nullable=False)
     vcpu = Column(Integer, nullable=False)
-    memory_gb = Column(Numeric(5, 2), nullable=False)
+    memory_gb = Column(Numeric(8, 2), nullable=False)  # Supports up to 999999.99 GB
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 

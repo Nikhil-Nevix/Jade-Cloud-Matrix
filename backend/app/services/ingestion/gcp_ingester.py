@@ -50,7 +50,7 @@ async def _ingest_gcp_live(db: AsyncSession):
 
     # Try authenticated mode first if credentials are provided
     access_token = None
-    if settings.GCP_SERVICE_ACCOUNT_JSON and os.path.exists(settings.GCP_SERVICE_ACCOUNT_JSON):
+    if settings.GOOGLE_APPLICATION_CREDENTIALS and os.path.exists(settings.GOOGLE_APPLICATION_CREDENTIALS):
         try:
             access_token = await _get_gcp_access_token()
             logger.info("Using authenticated GCP API access")
@@ -97,11 +97,6 @@ async def _ingest_gcp_live(db: AsyncSession):
                 if not page_token:
                     break
 
-                # Safety limit
-                if compute_count > 500:
-                    logger.info(f"Reached limit of 500 instances, stopping pagination")
-                    break
-
             except httpx.HTTPError as e:
                 logger.error(f"GCP API HTTP error: {e}")
                 break
@@ -133,7 +128,7 @@ async def _get_gcp_access_token() -> str:
         raise Exception("google-auth not installed")
 
     credentials = service_account.Credentials.from_service_account_file(
-        settings.GCP_SERVICE_ACCOUNT_JSON,
+        settings.GOOGLE_APPLICATION_CREDENTIALS,
         scopes=['https://www.googleapis.com/auth/cloud-billing.readonly']
     )
 

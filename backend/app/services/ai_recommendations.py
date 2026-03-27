@@ -3,16 +3,20 @@ import uuid
 import logging
 from datetime import datetime
 from typing import List, Dict, Optional
-from anthropic import Anthropic
+import google.generativeai as genai
 from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Initialize Anthropic client
+# Initialize Google Gemini client
 try:
-    client = Anthropic(api_key=settings.ANTHROPIC_API_KEY) if settings.ANTHROPIC_API_KEY else None
+    if settings.GOOGLE_API_KEY:
+        genai.configure(api_key=settings.GOOGLE_API_KEY)
+        client = genai.GenerativeModel('gemini-2.5-flash')
+    else:
+        client = None
 except Exception as e:
-    logger.warning(f"Failed to initialize Anthropic client: {e}")
+    logger.warning(f"Failed to initialize Google Gemini client: {e}")
     client = None
 
 
@@ -22,17 +26,21 @@ async def generate_recommendations(
 ) -> Dict:
     """
     Generate AI-powered cost optimization recommendations using Claude.
-    
+
     Args:
         calculations: List of calculation dicts with full data
         focus_areas: Optional list of focus areas to guide analysis
-    
+
     Returns:
         Dict with recommendations, savings estimates, and summary
     """
     if not client:
-        raise Exception("Claude API client not initialized. Please set ANTHROPIC_API_KEY in environment.")
-    
+        raise Exception("Google Gemini AI is not configured. Please contact your administrator to set up the GOOGLE_API_KEY.")
+
+    # Check for placeholder key
+    if settings.GOOGLE_API_KEY and settings.GOOGLE_API_KEY.startswith("your-google-api-key"):
+        raise Exception("Google Gemini AI is not configured properly. Please contact your administrator to set up a valid GOOGLE_API_KEY.")
+
     if not calculations:
         raise ValueError("At least one calculation is required for analysis")
     
@@ -61,11 +69,11 @@ async def generate_recommendations(
         "focus_areas": focus_areas or ["cost_reduction", "reserved_instances", "right_sizing"],
     }
     
-    system_prompt = """You are an expert cloud cost optimization consultant for Jade Global Software Pvt Ltd. 
-Analyze the provided multi-cloud pricing data and return ONLY a valid JSON object with specific, actionable 
-cost optimization recommendations. Base savings estimates on the actual numbers provided. Never make up numbers. 
+    system_prompt = """You are an expert cloud cost optimization consultant for Jade Global Software Pvt Ltd.
+Analyze the provided multi-cloud pricing data and return ONLY a valid JSON object with specific, actionable
+cost optimization recommendations. Base savings estimates on the actual numbers provided. Never make up numbers.
 Be specific about which provider and instance types to change."""
-    
+
     user_prompt = f"""Analyze these cloud infrastructure calculations and provide cost optimization recommendations:
 
 {json.dumps(context, indent=2)}
@@ -88,20 +96,46 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
   "total_estimated_annual_savings": 0.00,
   "summary": "2-3 sentence executive summary"
 }}"""
-    
+
     try:
-        logger.info(f"Calling Claude API to analyze {len(calculations)} calculations...")
-        
-        message = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=2000,
-            messages=[{"role": "user", "content": user_prompt}],
-            system=system_prompt,
+        logger.info(f"Calling Google Gemini API to analyze {len(calculations)} calculations...")
+
+        # Combine system and user prompts for Gemini
+        full_prompt = f"{system_prompt}\n\n{user_prompt}"
+
+        response = client.generate_content(
+            full_prompt,
+            generation_config={
+                'temperature': 0.7,
+                'max_output_tokens': 4000,
+            }
         )
-        
-        # Extract text from response
-        raw = message.content[0].text.strip()
-        
+
+        logger.info(f"Response type: {type(response)}")
+
+        # Extract text from Gemini response
+        if hasattr(response, 'text'):
+            raw = response.text.strip()
+        elif hasattr(response, 'candidates') and len(response.candidates) > 0:
+            candidate = response.candidates[0]
+            if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+                raw = ''.join(part.text for part in candidate.content.parts if hasattr(part, 'text')).strip()
+            else:
+                raise Exception("No text content found in Gemini response")
+        else:
+            raise Exception(f"Unexpected response format from Gemini: {response}")
+
+        # Remove markdown code fences if present
+        if raw.startswith('```json'):
+            raw = raw[7:]  # Remove ```json
+        if raw.startswith('```'):
+            raw = raw[3:]   # Remove ```
+        if raw.endswith('```'):
+            raw = raw[:-3]  # Remove trailing ```
+        raw = raw.strip()
+
+        logger.info(f"Raw response: {raw[:200]}...")
+
         # Parse JSON
         result = json.loads(raw)
         
@@ -110,13 +144,13 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
         result["generated_at"] = datetime.utcnow().isoformat()
         result["calculations_analysed"] = len(calculations)
         
-        logger.info("Claude API recommendations generated successfully.")
+        logger.info("Google Gemini API recommendations generated successfully.")
         return result
-    
+
     except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse Claude response as JSON: {e}")
+        logger.error(f"Failed to parse Gemini response as JSON: {e}")
         raise Exception("AI response was not valid JSON. Please try again.")
-    
+
     except Exception as e:
-        logger.error(f"Claude API call failed: {e}")
+        logger.error(f"Google Gemini API call failed: {e}")
         raise Exception(f"Failed to generate recommendations: {str(e)}")

@@ -19,7 +19,8 @@ class Settings(BaseSettings):
     CORS_ORIGINS: Union[str, list[str]] = "http://localhost:5173,http://localhost:3000"
 
     # AI
-    ANTHROPIC_API_KEY: str = ""
+    ANTHROPIC_API_KEY: str = ""  # Legacy - use GOOGLE_API_KEY instead
+    GOOGLE_API_KEY: str = ""
 
     # Cloud APIs (optional)
     AWS_ACCESS_KEY_ID: str = ""

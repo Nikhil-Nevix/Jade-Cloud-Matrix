@@ -33,15 +33,16 @@ async def start_scheduler():
     scheduler.add_job(
         scheduled_ingestion_job,
         CronTrigger(
-            hour=settings.INGESTION_HOUR,
-            minute=settings.INGESTION_MINUTE
+            day_of_week='sun',  # Sunday
+            hour=0,  # 12:00 AM (midnight)
+            minute=0
         ),
-        id="daily_pricing_ingestion",
+        id="weekly_pricing_ingestion",
         replace_existing=True,
         misfire_grace_time=3600,
     )
     scheduler.start()
-    logger.info(f"Pricing ingestion scheduler started. Runs daily at {settings.INGESTION_HOUR:02d}:{settings.INGESTION_MINUTE:02d} UTC.")
+    logger.info(f"Pricing ingestion scheduler started. Runs weekly on Sunday at 00:00 UTC (12:00 AM).")
 
 
 async def stop_scheduler():

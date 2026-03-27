@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_
 from app.models.pricing import ComputePricing
 from app.models.provider import Provider
+from app.services.region_mapper import build_region_mapping_for_providers
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,9 @@ async def find_equivalent_instances(
         Dict mapping provider name to ComputePricing object (or None if no match)
     """
     results = {}
+
+    # Ensure memory_gb is float (it may come as Decimal from database)
+    memory_gb = float(memory_gb)
 
     # Calculate memory tolerance (±10%)
     memory_min = memory_gb * 0.9
@@ -218,11 +222,23 @@ async def find_all_equivalents_for_workload(
     workload_by_provider = {name: [] for name in providers.values()}
 
     # For each compute selection, find equivalents
-    for selection in compute_selections:
-        vcpu,memory_gb = await get_instance_specs(selection["compute_pricing_id"], db)
+    for idx, selection in enumerate(compute_selections):
+        logger.info(f"Processing compute selection {idx}: {selection}")
+        try:
+            vcpu, memory_gb = await get_instance_specs(selection["compute_pricing_id"], db)
+            logger.info(f"Got instance specs: {vcpu} vCPU, {memory_gb} GB RAM")
+        except Exception as e:
+            logger.error(f"Failed to get instance specs for compute_pricing_id={selection['compute_pricing_id']}: {e}")
+            raise ValueError(f"Invalid compute_pricing_id {selection['compute_pricing_id']}: {e}")
 
-        # Build region mapping for this instance (use same regions if possible)
-        region_mapping = {pid: selection["region_id"] for pid in target_provider_ids}
+        # Build region mapping for this instance using intelligent region mapping
+        # This maps the source region to equivalent regions across all providers
+        region_mapping = await build_region_mapping_for_providers(
+            source_region_id=selection["region_id"],
+            target_provider_ids=target_provider_ids,
+            db=db
+        )
+        logger.info(f"Region mapping for selection {idx}: {region_mapping}")
 
         # Find equivalents across all providers
         equivalents = await find_equivalent_instances(

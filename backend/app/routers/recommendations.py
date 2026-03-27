@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, Request, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -9,6 +10,7 @@ from app.core.security import get_current_user
 from app.core.audit import log_audit
 from app.services.ai_recommendations import generate_recommendations
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -76,18 +78,35 @@ async def generate_ai_recommendations(
             calc_dicts,
             rec_request.focus_areas,
         )
+    except ValueError as e:
+        # Client errors (bad input)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "Bad Request", "message": str(e)}
+        )
     except Exception as e:
+        error_msg = str(e)
+        logger.error(f"Failed to generate recommendations: {error_msg}")
+
         await log_audit(
             db,
             action="generate_recommendations",
             status="error",
             user_id=current_user.id,
             ip_address=request.client.host if request.client else None,
-            error_message=str(e)
+            error_message=error_msg
         )
+
+        # Check for common configuration errors
+        if "not configured" in error_msg.lower() or "api" in error_msg.lower():
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={"error": "Service Unavailable", "message": error_msg}
+            )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": "Internal Server Error", "message": str(e)}
+            detail={"error": "Internal Server Error", "message": error_msg}
         )
     
     await log_audit(

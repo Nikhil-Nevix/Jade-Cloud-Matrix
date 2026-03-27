@@ -30,8 +30,8 @@ async def calculate_standard_pricing(
             continue
         
         pricing, provider_name = row
-        monthly_cost = float(pricing.price_per_month) * sel.quantity
-        
+        monthly_cost = float(pricing.price_per_month) * float(sel.quantity)
+
         if provider_name not in provider_costs:
             provider_costs[provider_name] = {"compute": 0.0, "storage": 0.0}
         provider_costs[provider_name]["compute"] += monthly_cost
@@ -48,8 +48,8 @@ async def calculate_standard_pricing(
             continue
         
         pricing, provider_name = row
-        monthly_cost = float(pricing.price_per_gb_month) * sel.size_gb
-        
+        monthly_cost = float(pricing.price_per_gb_month) * float(sel.size_gb)
+
         if provider_name not in provider_costs:
             provider_costs[provider_name] = {"compute": 0.0, "storage": 0.0}
         provider_costs[provider_name]["storage"] += monthly_cost

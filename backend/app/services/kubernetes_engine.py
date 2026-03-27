@@ -30,10 +30,10 @@ async def calculate_kubernetes_cost(
     
     pricing, provider_name, region_code = row
     
-    node_cost_monthly = float(pricing.price_per_month) * node_count
+    node_cost_monthly = float(pricing.price_per_month) * float(node_count)
     cluster_fee_monthly = float(pricing.cluster_fee_monthly) if include_cluster_fee else 0.0
     total_monthly = node_cost_monthly + cluster_fee_monthly
-    total_for_duration = total_monthly * duration_months
+    total_for_duration = total_monthly * float(duration_months)
     
     return {
         "provider_name": provider_name,

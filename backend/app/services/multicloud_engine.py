@@ -66,7 +66,7 @@ async def calculate_multicloud_comparison(
         # Compute costs
         compute_cost_monthly = 0.0
         for item in compute_workload:
-            monthly_cost = item["price_per_month"] * item["quantity"]
+            monthly_cost = float(item["price_per_month"]) * float(item["quantity"])
             compute_cost_monthly += monthly_cost
 
         # Storage costs (use base storage selections as-is for now)
@@ -76,8 +76,8 @@ async def calculate_multicloud_comparison(
         )
 
         total_monthly = compute_cost_monthly + storage_cost_monthly
-        total_annual = total_monthly * 12
-        total_for_duration = total_monthly * duration_months
+        total_annual = float(total_monthly) * 12
+        total_for_duration = float(total_monthly) * float(duration_months)
 
         provider_costs[provider_name] = {
             "compute_cost_monthly": compute_cost_monthly,
@@ -201,7 +201,7 @@ async def _calculate_storage_costs(
         if provider_name != target_provider_name:
             continue
 
-        monthly_cost = float(pricing.price_per_gb_month) * sel["size_gb"]
+        monthly_cost = float(pricing.price_per_gb_month) * float(sel["size_gb"])
         total_storage_cost += monthly_cost
 
     return total_storage_cost
